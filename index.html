@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>9996_X</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="chat-app" aria-label="X introduction messages">
+        <header class="chat-header">
+          <div class="chat-header-glass">
+            <span>To. X</span>
+          </div>
+        </header>
+
+        <section id="messages" class="messages" aria-live="polite"></section>
+
+        <footer class="composer-area">
+          <div class="composer-shell" aria-hidden="true">
+            <span id="placeholderText" class="composer-placeholder"></span>
+            <button
+              id="sendButton"
+              type="button"
+              class="send-button"
+              aria-label="메시지 전송"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 19V7"></path>
+                <path d="M6.75 12.25L12 7l5.25 5.25"></path>
+              </svg>
+            </button>
+          </div>
+        </footer>
+      </section>
+    </main>
+
+    <script src="./script.js"></script>
+  </body>
+</html>
