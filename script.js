@@ -70,7 +70,7 @@ const MESSAGES = [
   `니네가 왜 헤어져 구라 ㄴㄴ\n둘이서 행복하길!!\n따로 말고 둘이서 ♡`
 ];
 
-const LONG_PRESS_MS = 2000;
+const LONG_PRESS_MS = 1000;
 
 const messageList = document.getElementById("messageList");
 const messagesWrap = document.getElementById("messages");
