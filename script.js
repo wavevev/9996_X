@@ -1,4 +1,4 @@
-const RAW_MESSAGES = [
+const MESSAGES = [
   `그래도 예쁜 모습 많이 볼 수 있어서 행복했어—!\n앞으로 함께하지 못하지만 행복하길 바랄게…`,
   `나 없으니…\n좋드나……`,
   `형이 너 좋아한다고 그렇게 자신있어 하더니….`,
@@ -71,32 +71,21 @@ const RAW_MESSAGES = [
 ];
 
 const LONG_PRESS_MS = 2000;
-const SEQUENTIAL_DELAY_MS = 170;
 
-const messagesRoot = document.getElementById("messages");
+const messageList = document.getElementById("messageList");
+const messagesWrap = document.getElementById("messages");
 const sendButton = document.getElementById("sendButton");
-const placeholderText = document.getElementById("placeholderText");
 
-let displayedMessages = [];
-let longPressTimer = null;
+let shownMessages = [];
+let pressTimer = null;
 let longPressTriggered = false;
-let sequentialMode = false;
-
-const messageList = document.createElement("div");
-messageList.className = "message-list";
-messagesRoot.appendChild(messageList);
-
-function setPlaceholder() {
-  const isMobile = window.matchMedia("(max-width: 960px)").matches;
-  placeholderText.textContent = isMobile
-    ? "전송 버튼을 길게 눌러 보세요."
-    : "전송 버튼을 길게 누르면 전체 메시지를 한 번에 확인할 수 있습니다.";
-}
 
 function scrollToBottom(smooth = true) {
-  messagesRoot.scrollTo({
-    top: messagesRoot.scrollHeight,
-    behavior: smooth ? "smooth" : "auto"
+  requestAnimationFrame(() => {
+    messagesWrap.scrollTo({
+      top: messagesWrap.scrollHeight,
+      behavior: smooth ? "smooth" : "auto"
+    });
   });
 }
 
@@ -104,80 +93,88 @@ function createBubble(text) {
   const row = document.createElement("div");
   row.className = "message-row";
 
+  const wrap = document.createElement("div");
+  wrap.className = "bubble-wrap";
+
   const bubble = document.createElement("div");
   bubble.className = "bubble";
+
+  if (text.includes("\n")) {
+    bubble.classList.add("multiline");
+  }
+
   bubble.textContent = text;
 
-  row.appendChild(bubble);
+  wrap.appendChild(bubble);
+  row.appendChild(wrap);
+
   return row;
 }
 
-function appendMessage(text) {
-  displayedMessages.push(text);
-  messageList.appendChild(createBubble(text));
-  scrollToBottom(true);
+function renderMessage(text, smooth = true) {
+  const bubbleNode = createBubble(text);
+  messageList.appendChild(bubbleNode);
+  scrollToBottom(smooth);
 }
 
-function getRandomMessage() {
-  const remaining = RAW_MESSAGES.filter((message) => !displayedMessages.includes(message));
-  const pool = remaining.length ? remaining : RAW_MESSAGES;
+function getRandomUnshownMessage() {
+  const remaining = MESSAGES.filter((msg) => !shownMessages.includes(msg));
+  const pool = remaining.length ? remaining : MESSAGES;
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
-function clearSequentialMode() {
-  sequentialMode = false;
+function addRandomMessage() {
+  const msg = getRandomUnshownMessage();
+  shownMessages.push(msg);
+  renderMessage(msg, true);
 }
 
-async function revealAllSequentially() {
-  if (sequentialMode) return;
-  sequentialMode = true;
-
+function showAllMessagesAtOnce() {
   messageList.innerHTML = "";
-  displayedMessages = [];
+  shownMessages = [...MESSAGES];
+
+  const fragment = document.createDocumentFragment();
+  MESSAGES.forEach((msg) => {
+    fragment.appendChild(createBubble(msg));
+  });
+
+  messageList.appendChild(fragment);
   scrollToBottom(false);
-
-  for (const message of RAW_MESSAGES) {
-    appendMessage(message);
-    await new Promise((resolve) => window.setTimeout(resolve, SEQUENTIAL_DELAY_MS));
-  }
-
-  clearSequentialMode();
-}
-
-function handleShortPress() {
-  if (sequentialMode) return;
-  appendMessage(getRandomMessage());
 }
 
 function startPress() {
-  if (sequentialMode) return;
+  clearTimeout(pressTimer);
   longPressTriggered = false;
-  window.clearTimeout(longPressTimer);
-  longPressTimer = window.setTimeout(() => {
+
+  pressTimer = setTimeout(() => {
     longPressTriggered = true;
-    revealAllSequentially();
+    showAllMessagesAtOnce();
   }, LONG_PRESS_MS);
 }
 
 function endPress() {
-  window.clearTimeout(longPressTimer);
+  clearTimeout(pressTimer);
 }
 
-function clickPress() {
+function handleClick() {
   if (longPressTriggered) {
     longPressTriggered = false;
     return;
   }
-  handleShortPress();
+
+  addRandomMessage();
 }
 
 sendButton.addEventListener("mousedown", startPress);
 sendButton.addEventListener("mouseup", endPress);
 sendButton.addEventListener("mouseleave", endPress);
+
 sendButton.addEventListener("touchstart", startPress, { passive: true });
 sendButton.addEventListener("touchend", endPress);
 sendButton.addEventListener("touchcancel", endPress);
-sendButton.addEventListener("click", clickPress);
-window.addEventListener("resize", setPlaceholder);
 
-setPlaceholder();
+sendButton.addEventListener("click", handleClick);
+
+window.addEventListener("resize", () => {
+  scrollToBottom(false);
+});

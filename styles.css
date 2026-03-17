@@ -8,21 +8,24 @@
 }
 
 :root {
-  --page-bg: #626262;
+  --page-bg: #f5f5f7;
   --app-bg: #f5f5f7;
-  --app-edge: rgba(255, 255, 255, 0.32);
   --line: rgba(60, 60, 67, 0.16);
   --text: #111111;
   --muted: #c5c6c6;
   --bubble: #0000be;
   --tracking: -0.025em;
-  --shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+
   --header-h: 58px;
-  --composer-h: 76px;
-  --pad-x: 18px;
+  --composer-h: 98px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+
+  --pad-x: 20px;
   --bubble-max: 80%;
-  --bubble-size: 22px;
-  --placeholder-size: 15px;
+  --bubble-font: 16px;
+  --bubble-line: 1.27;
+
+  --placeholder-size: 16px;
 }
 
 * {
@@ -31,15 +34,21 @@
 
 html,
 body {
-  margin: 0;
   width: 100%;
+  height: 100%;
   min-height: 100%;
 }
 
+html {
+  background: var(--page-bg);
+}
+
 body {
+  margin: 0;
   background: var(--page-bg);
   color: var(--text);
-  font-family: "Pretendard", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+  font-family: "Pretendard", -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
   font-weight: 500;
   letter-spacing: var(--tracking);
   -webkit-font-smoothing: antialiased;
@@ -53,145 +62,199 @@ textarea {
   letter-spacing: inherit;
 }
 
-.app-shell {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
+.app-shell,
+.chat-app {
+  width: 100vw;
+  height: 100vh;
 }
 
 .chat-app {
   position: relative;
-  width: min(100vw - 48px, 1180px);
-  height: min(calc((100vw - 48px) / 1.508), calc(100vh - 48px));
-  max-height: 780px;
-  min-height: 560px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(247,247,249,0.98) 100%);
-  border: 1px solid var(--app-edge);
-  box-shadow: var(--shadow);
   overflow: hidden;
+  background: linear-gradient(180deg, rgba(255,255,255,0.97) 0%, rgba(247,247,249,1) 100%);
+  isolation: isolate;
 }
 
+/* 헤더 */
 .chat-header {
   position: absolute;
   inset: 0 0 auto 0;
-  z-index: 10;
+  z-index: 50;
+  pointer-events: none;
 }
 
 .chat-header-glass {
+  position: relative;
   height: var(--header-h);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 18px;
+  line-height: 1;
   color: #111111;
   background: rgba(249, 249, 251, 0.58);
-  backdrop-filter: saturate(180%) blur(24px);
-  -webkit-backdrop-filter: saturate(180%) blur(24px);
+  backdrop-filter: saturate(180%) blur(22px);
+  -webkit-backdrop-filter: saturate(180%) blur(22px);
   border-bottom: 1px solid var(--line);
+  overflow: hidden;
 }
 
+.chat-header-glass::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.34) 0%,
+    rgba(255, 255, 255, 0.10) 46%,
+    rgba(255, 255, 255, 0.03) 100%
+  );
+}
+
+.chat-header-glass span {
+  position: relative;
+  z-index: 1;
+}
+
+/* 메시지 영역 */
 .messages {
   position: absolute;
-  inset: var(--header-h) 0 var(--composer-h) 0;
+  inset: 0;
   overflow-y: auto;
-  padding: 20px var(--pad-x) 0;
-  scrollbar-width: none;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  scrollbar-width: thin;
+
+  padding:
+    calc(var(--header-h) - 6px)
+    var(--pad-x)
+    calc(var(--composer-h) + 12px + var(--safe-bottom))
+    var(--pad-x);
+
+  display: block;
+
+  z-index: 1;
 }
 
 .messages::-webkit-scrollbar {
-  display: none;
+  width: 8px;
 }
 
+.messages::-webkit-scrollbar-thumb {
+  background: rgba(60, 60, 67, 0.22);
+  border-radius: 999px;
+}
+
+.messages::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* 아래에서부터 쌓이되 스크롤 가능하게 */
 .message-list {
+  min-height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  min-height: 100%;
   justify-content: flex-end;
+  align-items: stretch;
+  gap: 5px;
+  padding-top: 8px;
+  padding-bottom: 6px;
 }
 
 .message-row {
   display: flex;
   justify-content: flex-end;
-  padding-right: 2px;
+  align-items: flex-end;
+}
+
+/* 꼬리 제거 버전 */
+.bubble-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: flex-end;
+  max-width: var(--bubble-max);
+  transform-origin: right bottom;
+  animation: bubble-in 220ms cubic-bezier(0.22, 0.82, 0.24, 1) both;
 }
 
 .bubble {
   position: relative;
-  max-width: var(--bubble-max);
-  padding: 13px 18px 14px;
+  display: inline-block;
+  min-width: 58px;
+  max-width: 100%;
+  padding: 10px 14px 11px;
   background: var(--bubble);
   color: #ffffff;
-  border-radius: 23px;
-  border-bottom-right-radius: 7px;
-  font-size: clamp(16px, 1.85vw, var(--bubble-size));
-  line-height: 1.29;
+  border-radius: 22px;
+  font-size: var(--bubble-font);
+  line-height: var(--bubble-line);
   white-space: pre-wrap;
   word-break: keep-all;
   overflow-wrap: anywhere;
-  transform-origin: right bottom;
-  animation: bubble-in 220ms cubic-bezier(0.2, 0.86, 0.28, 1) both;
+  box-shadow:
+    0 0.5px 0 rgba(255,255,255,0.05) inset,
+    0 1px 1px rgba(0,0,0,0.03);
 }
 
-.bubble::before {
-  content: "";
-  position: absolute;
-  right: -5px;
-  bottom: 0;
-  width: 22px;
-  height: 22px;
-  background: var(--bubble);
-  border-bottom-left-radius: 18px 14px;
-  clip-path: path("M 0 22 C 2 10, 10 2, 22 0 C 12 7, 13 18, 22 22 Z");
+.bubble.multiline {
+  padding-top: 11px;
+  padding-bottom: 12px;
 }
 
-.bubble::after {
-  content: "";
-  position: absolute;
-  right: -10px;
-  bottom: -1px;
-  width: 22px;
-  height: 22px;
-  background: var(--app-bg);
-  border-bottom-left-radius: 18px 15px;
-  clip-path: path("M 0 22 C 4 12, 10 4, 22 0 C 16 6, 17 17, 22 22 Z");
+/* 꼬리 완전 제거 */
+.bubble-tail {
+  display: none !important;
 }
 
+/* 입력창 */
 .composer-area {
   position: absolute;
   inset: auto 0 0 0;
-  z-index: 9;
-  padding: 12px 18px 14px;
-  background: linear-gradient(180deg, rgba(245,245,247,0) 0%, rgba(245,245,247,0.82) 30%, rgba(245,245,247,0.98) 100%);
+  z-index: 40;
+  padding:
+    11px
+    14px
+    calc(14px + var(--safe-bottom))
+    14px;
+  background: linear-gradient(
+    180deg,
+    rgba(245,245,247,0) 0%,
+    rgba(245,245,247,0.70) 20%,
+    rgba(245,245,247,0.96) 58%,
+    rgba(245,245,247,1) 100%
+  );
 }
 
 .composer-shell {
-  min-height: 44px;
-  border: 1.5px solid var(--muted);
+  min-height: 58px;
+  border: 1px solid var(--muted);
   border-radius: 999px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 0 6px 0 16px;
-  background: rgba(255,255,255,0.4);
+  gap: 10px;
+  padding: 0 6px 0 20px;
+  background: rgba(255,255,255,0.50);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .composer-placeholder {
   flex: 1;
   color: var(--muted);
-  font-size: clamp(13px, 1.1vw, var(--placeholder-size));
+  font-size: var(--placeholder-size);
   line-height: 1.2;
   user-select: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-left: 4px;
 }
 
 .send-button {
-  width: 38px;
-  height: 38px;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
   border: 0;
   border-radius: 999px;
   background: var(--bubble);
@@ -203,10 +266,11 @@ textarea {
   transition: transform 140ms ease, filter 140ms ease;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.08) inset;
 }
 
 .send-button:hover {
-  filter: brightness(1.04);
+  filter: brightness(1.03);
 }
 
 .send-button:active {
@@ -221,70 +285,104 @@ textarea {
   stroke-width: 2.8;
   stroke-linecap: round;
   stroke-linejoin: round;
+  transform: translateY(-0.5px);
 }
 
 @keyframes bubble-in {
-  from {
+  0% {
     opacity: 0;
-    transform: translateY(10px) scale(0.98);
+    transform: translateY(8px) scale(0.985);
   }
-  to {
+  100% {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
 }
 
-@media (max-width: 960px) {
-  :root {
-    --header-h: 68px;
-    --composer-h: 78px;
-    --pad-x: 14px;
-    --bubble-size: 16px;
-    --placeholder-size: 13px;
+@media (min-width: 961px) {
+  .messages {
+    padding-left: 20px;
+    padding-right: 20px;
   }
 
-  .app-shell {
-    padding: 22px 14px;
+  .bubble {
+    font-size: 16px;
+    line-height: 1.25;
+  }
+
+  .composer-shell {
+    min-height: 58px;
+    padding-left: 20px;
+  }
+
+  .composer-placeholder {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 960px) {
+  :root {
+    --header-h: 64px;
+    --composer-h: 98px;
+    --pad-x: 10px;
+    --bubble-font: 16px;
+    --placeholder-size: 15px;
   }
 
   .chat-app {
-    width: min(100vw - 28px, 500px);
-    height: min(calc((100vw - 28px) / 0.56), calc(100vh - 28px));
-    min-height: 720px;
-    max-height: calc(100vh - 28px);
+    height: 100svh;
   }
 
   .chat-header-glass {
     font-size: 17px;
-    padding-top: 8px;
+    padding-top: 6px;
   }
 
   .messages {
-    padding-top: 16px;
+    padding-top: calc(var(--header-h) - 6px);
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-bottom: calc(var(--composer-h) + 12px + var(--safe-bottom));
   }
 
   .bubble {
-    padding: 11px 16px 12px;
-    border-radius: 22px;
-    border-bottom-right-radius: 7px;
+    max-width: 100%;
+    padding: 10px 14px 11px;
+    font-size: 16px;
+    line-height: 1.27;
+    border-radius: 20px;
   }
 
   .composer-area {
-    padding: 10px 12px 16px;
+    padding: 10px 10px calc(14px + var(--safe-bottom)) 10px;
   }
 
   .composer-shell {
-    gap: 10px;
-    padding-left: 14px;
+    min-height: 58px;
+    padding-left: 18px;
+  }
+
+  .composer-placeholder {
+    font-size: 15px;
+    padding-left: 3px;
   }
 
   .send-button {
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
+    flex-basis: 40px;
   }
 
   .send-button svg {
-    width: 22px;
-    height: 22px;
+    width: 23px;
+    height: 23px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bubble-wrap,
+  .send-button {
+    animation: none !important;
+    transition: none !important;
   }
 }
