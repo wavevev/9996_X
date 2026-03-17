@@ -70,15 +70,18 @@ const MESSAGES = [
   `니네가 왜 헤어져 구라 ㄴㄴ\n둘이서 행복하길!!\n따로 말고 둘이서 ♡`
 ];
 
-const LONG_PRESS_MS = 1000;
+const LONG_PRESS_MS = 1200;
 
 const messageList = document.getElementById("messageList");
 const messagesWrap = document.getElementById("messages");
 const sendButton = document.getElementById("sendButton");
+const composerPlaceholder = document.getElementById("composerPlaceholder");
+const toast = document.getElementById("toast");
 
-let shownMessages = [];
+let remainingMessages = [...MESSAGES];
 let pressTimer = null;
 let longPressTriggered = false;
+let toastTimer = null;
 
 function scrollToBottom(smooth = true) {
   requestAnimationFrame(() => {
@@ -104,7 +107,6 @@ function createBubble(text) {
   }
 
   bubble.textContent = text;
-
   wrap.appendChild(bubble);
   row.appendChild(wrap);
 
@@ -117,29 +119,53 @@ function renderMessage(text, smooth = true) {
   scrollToBottom(smooth);
 }
 
-function getRandomUnshownMessage() {
-  const remaining = MESSAGES.filter((msg) => !shownMessages.includes(msg));
-  const pool = remaining.length ? remaining : MESSAGES;
-  return pool[Math.floor(Math.random() * pool.length)];
+function showToast(message = "마지막 X 소개서입니다") {
+  if (!toast) return;
+
+  clearTimeout(toastTimer);
+  toast.textContent = message;
+  toast.classList.add("show");
+  toast.setAttribute("aria-hidden", "false");
+
+  toastTimer = setTimeout(() => {
+    toast.classList.remove("show");
+    toast.setAttribute("aria-hidden", "true");
+  }, 450);
 }
 
 function addRandomMessage() {
-  const msg = getRandomUnshownMessage();
-  shownMessages.push(msg);
+  if (remainingMessages.length === 0) {
+    showToast();
+    return;
+  }
+
+  const randomIndex = Math.floor(Math.random() * remainingMessages.length);
+  const msg = remainingMessages[randomIndex];
+
+  remainingMessages.splice(randomIndex, 1);
   renderMessage(msg, true);
+
+  if (remainingMessages.length === 0) {
+    showToast();
+  }
 }
 
 function showAllMessagesAtOnce() {
-  messageList.innerHTML = "";
-  shownMessages = [...MESSAGES];
+  if (remainingMessages.length === 0) {
+    showToast();
+    return;
+  }
 
   const fragment = document.createDocumentFragment();
-  MESSAGES.forEach((msg) => {
+
+  remainingMessages.forEach((msg) => {
     fragment.appendChild(createBubble(msg));
   });
 
   messageList.appendChild(fragment);
+  remainingMessages = [];
   scrollToBottom(false);
+  showToast();
 }
 
 function startPress() {
@@ -172,8 +198,20 @@ sendButton.addEventListener("mouseleave", endPress);
 sendButton.addEventListener("touchstart", startPress, { passive: true });
 sendButton.addEventListener("touchend", endPress);
 sendButton.addEventListener("touchcancel", endPress);
+sendButton.addEventListener("touchmove", endPress);
 
 sendButton.addEventListener("click", handleClick);
+
+if (composerPlaceholder) {
+  composerPlaceholder.addEventListener("click", () => {
+    showAllMessagesAtOnce();
+  });
+
+  composerPlaceholder.addEventListener("touchend", (e) => {
+    e.preventDefault();
+    showAllMessagesAtOnce();
+  }, { passive: false });
+}
 
 window.addEventListener("resize", () => {
   scrollToBottom(false);

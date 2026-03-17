@@ -249,6 +249,8 @@ textarea {
   overflow: hidden;
   text-overflow: ellipsis;
   padding-left: 4px;
+  cursor: pointer;
+  opacity: 0.72;
 }
 
 .send-button {
@@ -384,5 +386,39 @@ textarea {
   .send-button {
     animation: none !important;
     transition: none !important;
+  }
+}
+
+.toast {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--composer-h) + 26px + var(--safe-bottom));
+  transform: translateX(-50%) translateY(8px);
+  z-index: 80;
+
+  padding: 10px 14px 11px;
+  border-radius: 999px;
+  background: rgba(28, 28, 30, 0.88);
+  color: #ffffff;
+  font-size: 13px;
+  line-height: 1;
+  white-space: nowrap;
+  letter-spacing: var(--tracking);
+
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+@media (max-width: 960px) {
+  .toast {
+    bottom: calc(var(--composer-h) + 22px + var(--safe-bottom));
+    font-size: 12px;
+    padding: 9px 13px 10px;
   }
 }
