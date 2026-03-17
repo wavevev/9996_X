@@ -75,6 +75,7 @@ const LONG_PRESS_MS = 1200;
 const messageList = document.getElementById("messageList");
 const messagesWrap = document.getElementById("messages");
 const sendButton = document.getElementById("sendButton");
+const composerShell = document.getElementById("composerShell");
 const composerPlaceholder = document.getElementById("composerPlaceholder");
 const toast = document.getElementById("toast");
 
@@ -130,7 +131,7 @@ function showToast(message = "마지막 X 소개서입니다") {
   toastTimer = setTimeout(() => {
     toast.classList.remove("show");
     toast.setAttribute("aria-hidden", "true");
-  }, 450);
+  }, 400);
 }
 
 function addRandomMessage() {
@@ -182,7 +183,7 @@ function endPress() {
   clearTimeout(pressTimer);
 }
 
-function handleClick() {
+function handleSendClick() {
   if (longPressTriggered) {
     longPressTriggered = false;
     return;
@@ -191,6 +192,7 @@ function handleClick() {
   addRandomMessage();
 }
 
+/* 전송 버튼 */
 sendButton.addEventListener("mousedown", startPress);
 sendButton.addEventListener("mouseup", endPress);
 sendButton.addEventListener("mouseleave", endPress);
@@ -200,15 +202,35 @@ sendButton.addEventListener("touchend", endPress);
 sendButton.addEventListener("touchcancel", endPress);
 sendButton.addEventListener("touchmove", endPress);
 
-sendButton.addEventListener("click", handleClick);
+sendButton.addEventListener("click", handleSendClick);
 
+/* 입력창 전체 클릭 시 전체 출력 */
+function handleComposerExpand(event) {
+  if (event.target === sendButton || sendButton.contains(event.target)) {
+    return;
+  }
+  showAllMessagesAtOnce();
+}
+
+if (composerShell) {
+  composerShell.addEventListener("click", handleComposerExpand);
+  composerShell.addEventListener("touchend", (e) => {
+    if (e.target === sendButton || sendButton.contains(e.target)) return;
+    e.preventDefault();
+    showAllMessagesAtOnce();
+  }, { passive: false });
+}
+
+/* 문구 자체도 따로 한 번 더 보장 */
 if (composerPlaceholder) {
-  composerPlaceholder.addEventListener("click", () => {
+  composerPlaceholder.addEventListener("click", (e) => {
+    e.stopPropagation();
     showAllMessagesAtOnce();
   });
 
   composerPlaceholder.addEventListener("touchend", (e) => {
     e.preventDefault();
+    e.stopPropagation();
     showAllMessagesAtOnce();
   }, { passive: false });
 }
